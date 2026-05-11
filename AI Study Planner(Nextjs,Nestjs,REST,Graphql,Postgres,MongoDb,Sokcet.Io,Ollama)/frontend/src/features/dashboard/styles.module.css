@@ -1,0 +1,17 @@
+.streakBadge {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  color: white;
+}
+
+.progressRing {
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.aiCard {
+  background: linear-gradient(135deg, #6c47ff 0%, #8b6fff 100%);
+  border-radius: 1rem;
+  color: white;
+}

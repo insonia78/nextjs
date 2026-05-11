@@ -1,0 +1,5 @@
+.planCard:hover {
+  box-shadow: 0 4px 20px rgba(108, 71, 255, 0.1);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}

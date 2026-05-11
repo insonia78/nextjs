@@ -1,0 +1,41 @@
+{
+  "name": "ai-study-planner",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "services/auth-service",
+    "services/planner-service",
+    "services/progress-service",
+    "services/ai-service",
+    "services/gateway-service",
+    "services/shared-rest"
+  ],
+  "scripts": {
+    "dev:frontend": "set NEXT_TELEMETRY_DISABLED=1&& npm run dev --workspace=frontend",
+    "dev:auth": "npm run start:dev --workspace=services/auth-service",
+    "dev:planner": "npm run start:dev --workspace=services/planner-service",
+    "dev:progress": "npm run start:dev --workspace=services/progress-service",
+    "dev:ai": "npm run start:dev --workspace=services/ai-service",
+    "dev:gateway": "npm run start:dev --workspace=services/gateway-service",
+    "dev": "concurrently \"npm run dev:gateway\" \"npm run dev:frontend\" \"npm run dev:auth\" \"npm run dev:planner\" \"npm run dev:progress\" \"npm run dev:ai\"",
+    "seed:postgres": "ts-node -r dotenv/config database/postgres/seeds/index.ts dotenv_config_path=database/.env",
+    "seed:mongo": "ts-node -r dotenv/config database/mongodb/seeds/index.ts dotenv_config_path=database/.env",
+    "seed": "npm run seed:postgres && npm run seed:mongo",
+    "install:all": "npm install && npm install --workspace=frontend && npm install --workspace=services/auth-service && npm install --workspace=services/planner-service && npm install --workspace=services/progress-service && npm install --workspace=services/ai-service && npm install --workspace=services/gateway-service && npm install --workspace=services/shared-rest"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.14.10",
+    "@types/pg": "^8.11.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "mongodb": "^6.7.0",
+    "pg": "^8.12.0"
+  }
+}

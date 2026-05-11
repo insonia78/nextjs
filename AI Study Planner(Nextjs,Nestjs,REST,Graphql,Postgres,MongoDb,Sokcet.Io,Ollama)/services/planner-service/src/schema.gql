@@ -1,0 +1,58 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreatePlanInput {
+  title: String!
+  topics: [CreateTopicInput!]
+  userId: String!
+}
+
+input CreateTaskInput {
+  deadline: String
+  timeMinutes: Int
+  title: String!
+}
+
+input CreateTopicInput {
+  name: String!
+  tasks: [CreateTaskInput!]
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  createPlan(input: CreatePlanInput!): StudyPlan!
+  deletePlan(id: ID!): Boolean!
+}
+
+type Query {
+  plan(id: ID!): StudyPlan!
+  plans(userId: String!): [StudyPlan!]!
+}
+
+type StudyPlan {
+  createdAt: DateTime!
+  id: ID!
+  progress: Float!
+  title: String!
+  topics: [Topic!]!
+  userId: String!
+}
+
+type Task {
+  deadline: String
+  id: ID!
+  status: String!
+  timeMinutes: Int!
+  title: String!
+}
+
+type Topic {
+  id: ID!
+  name: String!
+  tasks: [Task!]!
+}

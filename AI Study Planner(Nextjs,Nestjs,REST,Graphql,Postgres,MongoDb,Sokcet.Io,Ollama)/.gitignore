@@ -1,0 +1,12 @@
+# AI Study Planner
+
+node_modules/
+**/node_modules/
+.env
+.env.*
+.env.local
+.env.*.local
+dist/
+.next/
+*.log
+.DS_Store

@@ -1,0 +1,28 @@
+.panel {
+  border: 1px solid #e8e8ef;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+  box-shadow: 0 6px 30px rgba(16, 24, 40, 0.04);
+}
+
+.pill {
+  border: 1px solid #d8d5ff;
+  background: #f3f1ff;
+  color: #4a36b4;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.outputBox {
+  border: 1px dashed #d9dbe8;
+  border-radius: 14px;
+  background: #f8f9fd;
+}
+
+.topicCard {
+  border: 1px solid #ececf4;
+  border-radius: 12px;
+  background: #fff;
+}
