@@ -1,0 +1,164 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: marketplace-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: marketplace
+    ports:
+      - "${MYSQL_HOST_PORT:-3307}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  mongo:
+    image: mongo:7
+    container_name: marketplace-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    container_name: marketplace-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: marketplace-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: marketplace-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  user-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: user-service
+    container_name: marketplace-user-service
+    depends_on:
+      - mysql
+    environment:
+      CLOUDTRAIL_ENDPOINT: ${CLOUDTRAIL_ENDPOINT:-}
+    ports:
+      - "8081:8081"
+
+  product-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: product-service
+    container_name: marketplace-product-service
+    depends_on:
+      - mongo
+      - elasticsearch
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/marketplace
+      ELASTICSEARCH_URI: http://elasticsearch:9200
+      CLOUDTRAIL_ENDPOINT: ${CLOUDTRAIL_ENDPOINT:-}
+    ports:
+      - "8082:8082"
+
+  order-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: order-service
+    container_name: marketplace-order-service
+    depends_on:
+      - mysql
+      - kafka
+    environment:
+      ORDER_DB_URL: jdbc:mysql://mysql:3306/marketplace?createDatabaseIfNotExist=true
+      ORDER_DB_USERNAME: root
+      ORDER_DB_PASSWORD: root
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CLOUDTRAIL_ENDPOINT: ${CLOUDTRAIL_ENDPOINT:-}
+    ports:
+      - "8083:8083"
+
+  payment-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: payment-service
+    container_name: marketplace-payment-service
+    depends_on:
+      - mysql
+    environment:
+      PAYMENT_DB_URL: jdbc:mysql://mysql:3306/marketplace?createDatabaseIfNotExist=true
+      PAYMENT_DB_USERNAME: root
+      PAYMENT_DB_PASSWORD: root
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      CLOUDTRAIL_ENDPOINT: ${CLOUDTRAIL_ENDPOINT:-}
+    ports:
+      - "8084:8084"
+
+  gateway-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: gateway-service
+    container_name: marketplace-gateway-service
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+      - payment-service
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      PRODUCT_SERVICE_URL: http://product-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
+    ports:
+      - "${GATEWAY_HOST_PORT:-8090}:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: marketplace-frontend
+    depends_on:
+      - gateway-service
+    environment:
+      MARKETPLACE_API_BASE_URL: http://gateway-service:8080
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8090
+    ports:
+      - "3000:3000"
+
+volumes:
+  mysql-data:
+  mongo-data:
+  elastic-data:

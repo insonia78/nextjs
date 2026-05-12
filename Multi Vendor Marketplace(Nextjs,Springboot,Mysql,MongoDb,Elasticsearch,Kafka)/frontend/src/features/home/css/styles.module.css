@@ -1,0 +1,229 @@
+.layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 1.2rem;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #cf620d, #a84706);
+  color: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.kicker {
+  margin: 0 0 1rem;
+  font-weight: 800;
+  opacity: 0.88;
+}
+
+.sidebar h1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.sidebar p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.techStack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 2rem;
+}
+
+.techStack span {
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.content {
+  display: grid;
+  gap: 1rem;
+}
+
+.searchBar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  gap: 0.8rem;
+}
+
+.searchBar input,
+.searchBar button {
+  border: 0;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  box-shadow: var(--shadow);
+}
+
+.searchBar button,
+.cta {
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: white;
+  font-weight: 800;
+}
+
+.heroCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1rem;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, #fff4e8, #fffdfb);
+  box-shadow: var(--shadow);
+}
+
+.saleBadge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(234, 106, 17, 0.14);
+  color: var(--accent-deep);
+  font-weight: 800;
+}
+
+.heroCard h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin: 0.7rem 0 0;
+}
+
+.heroImageWrap {
+  display: grid;
+  place-items: center;
+}
+
+.heroImage {
+  object-fit: cover;
+}
+
+.cta {
+  display: inline-flex;
+  margin-top: 1rem;
+  padding: 0.9rem 1.2rem;
+  border-radius: 0.9rem;
+}
+
+.categoryRail,
+.infoStrip {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.categoryRail a,
+.infoStrip span {
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--muted);
+  box-shadow: var(--shadow);
+}
+
+.activeCategory {
+  color: white !important;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep)) !important;
+}
+
+.productsSection {
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 1.5rem;
+  padding: 1.3rem;
+  box-shadow: var(--shadow);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sectionHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.sectionHeader a {
+  color: var(--accent-deep);
+  font-weight: 800;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.card {
+  display: grid;
+  gap: 0.8rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 1.2rem;
+  border: 1px solid var(--line);
+}
+
+.cardImage {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #f9f0e7, #fff);
+}
+
+.cardBody {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.category,
+.vendor,
+.priceRow span {
+  margin: 0;
+  color: var(--muted);
+}
+
+.cardTitle {
+  font-weight: 800;
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (max-width: 1120px) {
+  .layout,
+  .heroCard {
+    grid-template-columns: 1fr;
+  }
+
+  .productGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .searchBar {
+    grid-template-columns: 1fr;
+  }
+
+  .productGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar,
+  .heroCard,
+  .productsSection {
+    padding: 1.2rem;
+  }
+}

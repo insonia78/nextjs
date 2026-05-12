@@ -1,0 +1,24 @@
+type Vendor {
+  id: ID!
+  name: String!
+  storefront: String!
+  rating: Float!
+}
+
+type Product {
+  id: ID!
+  name: String!
+  description: String!
+  category: String!
+  price: Float!
+  imageUrl: String!
+  tags: [String!]!
+  inventory: Int!
+  vendor: Vendor!
+}
+
+type Query {
+  products(search: String, category: String): [Product!]!
+  product(id: ID!): Product
+  categories: [String!]!
+}
