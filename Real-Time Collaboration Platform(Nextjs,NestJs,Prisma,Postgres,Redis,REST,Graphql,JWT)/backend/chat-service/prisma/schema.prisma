@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Channel {
+  id        String    @id @default(uuid())
+  name      String
+  teamId    String
+  type      ChannelType @default(TEXT)
+  createdAt DateTime  @default(now())
+  messages  Message[]
+
+  @@map("channels")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  senderId  String
+  channelId String
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  createdAt DateTime @default(now())
+  editedAt  DateTime?
+
+  @@map("messages")
+}
+
+enum ChannelType {
+  TEXT
+  VOICE
+  DM
+}

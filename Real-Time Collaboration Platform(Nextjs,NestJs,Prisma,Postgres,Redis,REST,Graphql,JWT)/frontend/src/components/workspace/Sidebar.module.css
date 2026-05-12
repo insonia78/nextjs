@@ -1,0 +1,224 @@
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.teamName {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.notifBtn {
+  position: relative;
+  font-size: 18px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notifPanel {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+
+.notifHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+.notifList { padding: 4px 0; }
+
+.notifItem {
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  border-left: 3px solid var(--accent);
+  margin: 4px 8px;
+  border-radius: 4px;
+  background: rgba(233,69,96,0.05);
+}
+
+.notifItem.read {
+  border-left-color: var(--border);
+  opacity: 0.6;
+  background: transparent;
+}
+
+.nav {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.navItem:hover { background: var(--bg); color: var(--text); }
+.navItem.active { background: var(--accent); color: #fff; }
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.section {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.addBtn {
+  font-size: 18px;
+  color: var(--text-muted);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.addBtn:hover { background: var(--bg); color: var(--text); }
+
+.newChannelForm {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.newChannelForm input { flex: 1; font-size: 13px; padding: 6px 10px; }
+
+.channelList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.channelItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+}
+
+.channelItem:hover { background: var(--bg); color: var(--text); }
+.activeChannel { background: var(--surface2); color: var(--text); }
+
+.channelName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.empty {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.userSection {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.userInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.username {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRole {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.logoutBtn {
+  font-size: 18px;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.logoutBtn:hover { color: var(--danger); }

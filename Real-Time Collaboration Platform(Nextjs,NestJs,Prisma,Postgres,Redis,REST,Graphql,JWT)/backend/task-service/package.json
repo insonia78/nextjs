@@ -1,0 +1,40 @@
+{
+  "name": "task-service",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "start": "node dist/main",
+    "start:dev": "nest start --watch",
+    "db:migrate": "npx prisma migrate dev",
+    "db:generate": "npx prisma generate"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/graphql": "^12.0.0",
+    "@nestjs/apollo": "^12.0.0",
+    "@apollo/server": "^4.0.0",
+    "@nestjs/config": "^3.0.0",
+    "@nestjs/jwt": "^10.0.0",
+    "@nestjs/passport": "^10.0.0",
+    "@prisma/client": "^5.0.0",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
+    "graphql": "^16.0.0",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.1",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.0.0",
+    "@nestjs/schematics": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "@types/passport-jwt": "^3.0.13",
+    "prisma": "^5.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.1"
+  }
+}

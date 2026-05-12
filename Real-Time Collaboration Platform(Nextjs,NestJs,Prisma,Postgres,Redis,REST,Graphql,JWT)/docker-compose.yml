@@ -1,0 +1,94 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: collab
+      POSTGRES_PASSWORD: collab_pass
+      POSTGRES_DB: collab_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+
+  auth-service:
+    build: ./backend/auth-service
+    command: sh -c "until npx prisma db push --accept-data-loss; do echo 'Waiting for postgres...'; sleep 2; done; node dist/main"
+    ports:
+      - '4001:4001'
+    environment:
+      DATABASE_URL: postgresql://collab:collab_pass@postgres:5432/collab_db?schema=auth
+      JWT_SECRET: super_secret_jwt_key_change_in_production
+      JWT_EXPIRES_IN: 7d
+      PORT: 4001
+    depends_on:
+      - postgres
+
+  chat-service:
+    build: ./backend/chat-service
+    command: sh -c "until npx prisma db push --accept-data-loss; do echo 'Waiting for postgres...'; sleep 2; done; node dist/main"
+    ports:
+      - '4002:4002'
+    environment:
+      DATABASE_URL: postgresql://collab:collab_pass@postgres:5432/collab_db?schema=chat
+      REDIS_URL: redis://redis:6379
+      PORT: 4002
+    depends_on:
+      - postgres
+      - redis
+
+  task-service:
+    build: ./backend/task-service
+    command: sh -c "until npx prisma db push --accept-data-loss; do echo 'Waiting for postgres...'; sleep 2; done; node dist/main"
+    ports:
+      - '4003:4003'
+    environment:
+      DATABASE_URL: postgresql://collab:collab_pass@postgres:5432/collab_db?schema=task
+      PORT: 4003
+    depends_on:
+      - postgres
+
+  notification-service:
+    build: ./backend/notification-service
+    ports:
+      - '4004:4004'
+    environment:
+      DATABASE_URL: postgresql://collab:collab_pass@postgres:5432/collab_db
+      REDIS_URL: redis://redis:6379
+      PORT: 4004
+    depends_on:
+      - postgres
+      - redis
+
+  gateway:
+    build: ./backend/gateway
+    ports:
+      - '4000:4000'
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:4001
+      CHAT_SERVICE_URL: http://chat-service:4002
+      TASK_SERVICE_URL: http://task-service:4003
+      NOTIFICATION_SERVICE_URL: http://notification-service:4004
+      PORT: 4000
+    depends_on:
+      - auth-service
+      - chat-service
+      - task-service
+      - notification-service
+
+  frontend:
+    build: ./frontend
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_GATEWAY_URL: http://localhost:4000
+      NEXT_PUBLIC_WS_URL: ws://localhost:4002
+    depends_on:
+      - gateway
+
+volumes:
+  pgdata:
