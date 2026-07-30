@@ -2,10 +2,18 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY frontend/package*.json ./
-RUN npm install
+COPY package*.json ./
+COPY frontend/package.json frontend/
+COPY services/auth-service/package.json services/auth-service/
+COPY services/planner-service/package.json services/planner-service/
+COPY services/progress-service/package.json services/progress-service/
+COPY services/ai-service/package.json services/ai-service/
+COPY services/gateway-service/package.json services/gateway-service/
+COPY services/shared-rest/package.json services/shared-rest/
 
-COPY frontend/ ./
+RUN npm ci --workspace=frontend
+
+COPY . ./
 
 ARG NEXT_PUBLIC_AUTH_API_URL
 ARG NEXT_PUBLIC_PROGRESS_API_URL
@@ -22,7 +30,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV PORT=3000
 
-RUN npm run build
+RUN npm run build --workspace=frontend
+
+WORKDIR /app/frontend
 
 EXPOSE 3000
 
