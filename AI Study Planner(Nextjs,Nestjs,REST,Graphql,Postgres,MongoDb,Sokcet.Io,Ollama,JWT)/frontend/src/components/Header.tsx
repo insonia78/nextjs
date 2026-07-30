@@ -103,9 +103,11 @@ export default function Header() {
       return;
     }
 
+    const userId = user.id;
+
     async function loadNotifications() {
       try {
-        const plans = await getPlans(user.id);
+        const plans = await getPlans(userId);
         const nextNotifications = buildNotifications(plans).filter(
           (notification) => !dismissedIds.includes(notification.id),
         );
