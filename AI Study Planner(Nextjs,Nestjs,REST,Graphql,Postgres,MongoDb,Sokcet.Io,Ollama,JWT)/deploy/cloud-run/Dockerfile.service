@@ -16,7 +16,8 @@ FROM deps AS builder
 WORKDIR /app
 ARG SERVICE_PATH
 COPY . ./
-RUN npm run build --workspace=$SERVICE_PATH
+RUN npm run build --workspace=$SERVICE_PATH \
+ && test -f "$SERVICE_PATH/dist/main.js"
 
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -36,10 +37,13 @@ COPY services/shared-rest/package*.json services/shared-rest/
 
 RUN npm install --omit=dev
 
-COPY --from=builder /app/services ./services
+COPY --from=builder /app/services/shared-rest ./services/shared-rest
+COPY --from=builder /app/$SERVICE_PATH ./$SERVICE_PATH
 
 WORKDIR /app/$SERVICE_PATH
 
+RUN test -f /app/$SERVICE_PATH/dist/main.js
+
 EXPOSE 8080
 
-CMD ["sh", "-c", "node dist/main"]
+CMD ["sh", "-c", "node dist/main.js"]
