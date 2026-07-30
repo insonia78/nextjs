@@ -11,8 +11,8 @@ export interface ProgressSession {
   planId?: string;
   topicId?: string;
   taskId?: string;
+  status: "completed" | "in_progress" | "pending";
   timeSpent: number;
-  completed?: boolean;
   createdAt?: string;
 }
 

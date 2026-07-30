@@ -1,0 +1,45 @@
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+COPY package*.json ./
+COPY frontend/package*.json frontend/
+COPY services/auth-service/package*.json services/auth-service/
+COPY services/planner-service/package*.json services/planner-service/
+COPY services/progress-service/package*.json services/progress-service/
+COPY services/ai-service/package*.json services/ai-service/
+COPY services/gateway-service/package*.json services/gateway-service/
+COPY services/shared-rest/package*.json services/shared-rest/
+
+RUN npm install
+
+FROM deps AS builder
+WORKDIR /app
+ARG SERVICE_PATH
+COPY . ./
+RUN npm run build --workspace=$SERVICE_PATH
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+ARG SERVICE_PATH
+ENV SERVICE_PATH=$SERVICE_PATH
+ENV NODE_ENV=production
+ENV PORT=8080
+
+COPY package*.json ./
+COPY frontend/package*.json frontend/
+COPY services/auth-service/package*.json services/auth-service/
+COPY services/planner-service/package*.json services/planner-service/
+COPY services/progress-service/package*.json services/progress-service/
+COPY services/ai-service/package*.json services/ai-service/
+COPY services/gateway-service/package*.json services/gateway-service/
+COPY services/shared-rest/package*.json services/shared-rest/
+
+RUN npm install --omit=dev
+
+COPY --from=builder /app/services ./services
+
+WORKDIR /app/$SERVICE_PATH
+
+EXPOSE 8080
+
+CMD ["sh", "-c", "node dist/main"]

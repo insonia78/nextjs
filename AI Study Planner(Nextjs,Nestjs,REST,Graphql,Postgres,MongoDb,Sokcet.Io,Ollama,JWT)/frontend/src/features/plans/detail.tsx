@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, BookOpen, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle, Clock, AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getPlan, type ApiPlan } from "@/lib/study-planner-api";
+import {
+  addPlanTask,
+  deletePlanTask,
+  getPlan,
+  type ApiPlan,
+  updatePlanTask,
+  updatePlanTaskStatus,
+} from "@/lib/study-planner-api";
 import { useAuth } from "@/lib/auth-context";
 
 interface PlanDetail extends ApiPlan {
@@ -12,12 +18,29 @@ interface PlanDetail extends ApiPlan {
   updatedAt?: string;
 }
 
+type TaskFormState = {
+  title: string;
+  timeMinutes: string;
+  deadline: string;
+};
+
+const EMPTY_TASK_FORM: TaskFormState = {
+  title: "",
+  timeMinutes: "30",
+  deadline: "",
+};
+
 export default function PlanDetailFeature({ planId }: { planId: string }) {
   const { user } = useAuth();
   const [plan, setPlan] = useState<PlanDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notFoundTriggered, setNotFoundTriggered] = useState(false);
+  const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
+  const [taskForm, setTaskForm] = useState<TaskFormState>(EMPTY_TASK_FORM);
+  const [savingTask, setSavingTask] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id || !planId) return;
@@ -29,8 +52,7 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
         const result = await getPlan(planId);
         
         if (!result) {
-          setNotFoundTriggered(true);
-          notFound();
+          setError("Plan not found");
           return;
         }
 
@@ -46,8 +68,105 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
     void loadPlan();
   }, [user?.id, planId]);
 
-  if (notFoundTriggered) {
-    return null;
+  async function handleToggleTask(taskId: string, completed: boolean) {
+    try {
+      setUpdatingTaskId(taskId);
+      setError(null);
+      const updatedPlan = await updatePlanTaskStatus(
+        taskId,
+        completed ? "completed" : "pending",
+      );
+      setPlan(updatedPlan as PlanDetail);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update task");
+    } finally {
+      setUpdatingTaskId(null);
+    }
+  }
+
+  function openAddTask(topicId: string) {
+    setEditingTaskId(null);
+    setEditingTopicId(topicId);
+    setTaskForm(EMPTY_TASK_FORM);
+    setError(null);
+  }
+
+  function openEditTask(topicId: string, task: PlanDetail["topics"][number]["tasks"][number]) {
+    setEditingTaskId(task.id);
+    setEditingTopicId(topicId);
+    setTaskForm({
+      title: task.title,
+      timeMinutes: String(task.timeMinutes ?? 30),
+      deadline: task.deadline ?? "",
+    });
+    setError(null);
+  }
+
+  function closeTaskEditor() {
+    setEditingTaskId(null);
+    setEditingTopicId(null);
+    setTaskForm(EMPTY_TASK_FORM);
+    setSavingTask(false);
+  }
+
+  async function handleSaveTask() {
+    if (!editingTopicId) {
+      return;
+    }
+
+    const trimmedTitle = taskForm.title.trim();
+    if (!trimmedTitle) {
+      setError("Task title is required");
+      return;
+    }
+
+    const parsedTime = Number.parseInt(taskForm.timeMinutes, 10);
+    const timeMinutes = Number.isFinite(parsedTime) && parsedTime > 0 ? parsedTime : 30;
+
+    try {
+      setSavingTask(true);
+      setError(null);
+
+      const updatedPlan = editingTaskId
+        ? await updatePlanTask(editingTaskId, {
+            title: trimmedTitle,
+            timeMinutes,
+            deadline: taskForm.deadline.trim() || undefined,
+          })
+        : await addPlanTask(editingTopicId, {
+            title: trimmedTitle,
+            timeMinutes,
+            deadline: taskForm.deadline.trim() || undefined,
+          });
+
+      setPlan(updatedPlan as PlanDetail);
+      closeTaskEditor();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save task");
+      setSavingTask(false);
+    }
+  }
+
+  async function handleDeleteTask(taskId: string) {
+    const confirmed = window.confirm("Delete this task?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingTaskId(taskId);
+      setError(null);
+      const updatedPlan = await deletePlanTask(taskId);
+      setPlan(updatedPlan as PlanDetail);
+
+      if (editingTaskId === taskId) {
+        closeTaskEditor();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete task");
+    } finally {
+      setDeletingTaskId(null);
+    }
   }
 
   if (!user) {
@@ -69,7 +188,7 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
     );
   }
 
-  if (error || !plan) {
+  if (!plan) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Link
@@ -113,6 +232,12 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
         <ArrowLeft size={18} />
         Back to Plans
       </Link>
+
+      {error ? (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      ) : null}
 
       {/* Plan Title and Stats */}
       <div className="mb-8">
@@ -171,7 +296,63 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
                     </p>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => openAddTask(topic.id)}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark"
+                >
+                  <Plus size={16} />
+                  Add Task
+                </button>
               </div>
+
+              {editingTopicId === topic.id ? (
+                <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
+                  <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_140px]">
+                    <input
+                      type="text"
+                      value={taskForm.title}
+                      onChange={(e) => setTaskForm((current) => ({ ...current, title: e.target.value }))}
+                      placeholder="Task title"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                    <input
+                      type="number"
+                      min={1}
+                      value={taskForm.timeMinutes}
+                      onChange={(e) => setTaskForm((current) => ({ ...current, timeMinutes: e.target.value }))}
+                      placeholder="Minutes"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                    <input
+                      type="text"
+                      value={taskForm.deadline}
+                      onChange={(e) => setTaskForm((current) => ({ ...current, deadline: e.target.value }))}
+                      placeholder="Deadline"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={closeTaskEditor}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveTask()}
+                      disabled={savingTask}
+                      className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+                    >
+                      {savingTask ? "Saving..." : editingTaskId ? "Save Task" : "Add Task"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {/* Progress Bar */}
               <div className="mb-4">
@@ -204,7 +385,8 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
                       <input
                         type="checkbox"
                         checked={task.status === "completed"}
-                        readOnly
+                        disabled={updatingTaskId === task.id || deletingTaskId === task.id}
+                        onChange={(e) => void handleToggleTask(task.id, e.target.checked)}
                         className="w-5 h-5 text-primary rounded"
                       />
                       <span
@@ -222,6 +404,22 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
                           {task.timeMinutes}m
                         </div>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => openEditTask(topic.id, task)}
+                        disabled={deletingTaskId === task.id}
+                        className="rounded-lg p-1 text-gray-400 hover:bg-white hover:text-primary transition"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleDeleteTask(task.id)}
+                        disabled={deletingTaskId === task.id}
+                        className="rounded-lg p-1 text-gray-400 hover:bg-white hover:text-red-500 transition disabled:opacity-50"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                       {task.status === "completed" && (
                         <CheckCircle className="text-green-600 shrink-0" size={18} />
                       )}

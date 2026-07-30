@@ -5,6 +5,14 @@ import { getProgressSessions, getProgressStats } from "@/lib/study-planner-api";
 import { useAuth } from "@/lib/auth-context";
 import { useProgressSocket, type ProgressSession } from "@/lib/use-progress-socket";
 
+type ProgressSessionRow = {
+  _id?: string;
+  userId?: string;
+  createdAt?: string;
+  timeSpent: number;
+  status?: "completed" | "in_progress" | "pending";
+};
+
 function dayLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { weekday: "short" });
 }
@@ -13,9 +21,24 @@ export default function ProgressFeature() {
   const { user } = useAuth();
   const userId = user?.id;
   const [stats, setStats] = useState({ totalMinutes: 0, totalSessions: 0, completed: 0 });
-  const [sessions, setSessions] = useState<Array<{ createdAt?: string; timeSpent: number }>>([]);
+  const [sessions, setSessions] = useState<ProgressSessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleProgressUpdated = useCallback((session: ProgressSession) => {
+    if (!userId || session.userId !== userId) {
+      return;
+    }
+
+    setSessions((current) => [session, ...current]);
+    setStats((current) => ({
+      totalMinutes: current.totalMinutes + session.timeSpent,
+      totalSessions: current.totalSessions + 1,
+      completed: current.completed + (session.status === "completed" ? 1 : 0),
+    }));
+  }, [userId]);
+
+  useProgressSocket({ onProgressUpdated: handleProgressUpdated });
 
   useEffect(() => {
     if (!userId) return;
@@ -24,6 +47,7 @@ export default function ProgressFeature() {
     async function loadProgress() {
       try {
         setLoading(true);
+        setError(null);
         const [statsRes, sessionsRes] = await Promise.all([
           getProgressStats(currentUserId),
           getProgressSessions(currentUserId),

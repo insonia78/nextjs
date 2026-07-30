@@ -19,6 +19,24 @@ export class CreateTaskInput {
 }
 
 @InputType()
+export class UpdateTaskInput {
+  @Field({ nullable: true })
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @Field(() => Int, { nullable: true })
+  @IsNumber()
+  @IsOptional()
+  timeMinutes?: number;
+
+  @Field({ nullable: true })
+  @IsString()
+  @IsOptional()
+  deadline?: string;
+}
+
+@InputType()
 export class CreateTopicInput {
   @Field()
   @IsString()

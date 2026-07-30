@@ -1,15 +1,21 @@
 import { Controller, Post, Get, Body, Param } from '@nestjs/common';
 import { ProgressService } from './progress.service';
 import { CreateProgressDto } from './dto/create-progress.dto';
+import { ProgressGateway } from './progress.gateway';
 
 @Controller('progress')
 export class ProgressController {
-  constructor(private readonly progressService: ProgressService) {}
+  constructor(
+    private readonly progressService: ProgressService,
+    private readonly progressGateway: ProgressGateway,
+  ) {}
 
   // POST /api/progress
   @Post()
-  create(@Body() dto: CreateProgressDto) {
-    return this.progressService.create(dto);
+  async create(@Body() dto: CreateProgressDto) {
+    const session = await this.progressService.create(dto);
+    this.progressGateway.emitProgressUpdated(session);
+    return session;
   }
 
   // GET /api/progress/:userId

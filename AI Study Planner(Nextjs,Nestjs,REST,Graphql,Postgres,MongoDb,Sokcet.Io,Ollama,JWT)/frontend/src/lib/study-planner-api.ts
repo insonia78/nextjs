@@ -38,6 +38,14 @@ export type ProgressSession = {
 const plannerGraphqlUrl =
   process.env.NEXT_PUBLIC_PLANNER_GRAPHQL_URL ?? "http://localhost:3000/graphql";
 
+function getPlannerErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "Failed to connect to planner service";
+}
+
 async function plannerQuery<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
     console.log(`Sending GraphQL query to ${plannerGraphqlUrl} with variables:`, variables);
   try{  
@@ -67,7 +75,7 @@ async function plannerQuery<T>(query: string, variables?: Record<string, unknown
 
   }catch(err) {
     console.error("Error during planner query:", err);
-    throw new Error("Failed to connect to planner service");
+    throw new Error(getPlannerErrorMessage(err));
   }
   
 }
@@ -135,6 +143,12 @@ export type TopicInput = {
   tasks?: Array<{ title: string; timeMinutes?: number; deadline?: string }>;
 };
 
+export type TaskInput = {
+  title: string;
+  timeMinutes?: number;
+  deadline?: string;
+};
+
 export async function createPlan(
   userId: string,
   title: string,
@@ -187,6 +201,121 @@ export async function deletePlan(planId: string): Promise<boolean> {
   );
 
   return data.deletePlan ?? false;
+}
+
+export async function updatePlanTaskStatus(
+  taskId: string,
+  status: "completed" | "in_progress" | "pending",
+): Promise<ApiPlan> {
+  const data = await plannerQuery<{ updateTaskStatus: ApiPlan }>(
+    `mutation UpdateTaskStatus($taskId: ID!, $status: String!) {
+      updateTaskStatus(taskId: $taskId, status: $status) {
+        id
+        title
+        userId
+        progress
+        createdAt
+        topics {
+          id
+          name
+          tasks {
+            id
+            title
+            timeMinutes
+            status
+            deadline
+          }
+        }
+      }
+    }`,
+    { taskId, status },
+  );
+
+  return data.updateTaskStatus;
+}
+
+export async function addPlanTask(topicId: string, input: TaskInput): Promise<ApiPlan> {
+  const data = await plannerQuery<{ addTask: ApiPlan }>(
+    `mutation AddTask($topicId: ID!, $input: CreateTaskInput!) {
+      addTask(topicId: $topicId, input: $input) {
+        id
+        title
+        userId
+        progress
+        createdAt
+        topics {
+          id
+          name
+          tasks {
+            id
+            title
+            timeMinutes
+            status
+            deadline
+          }
+        }
+      }
+    }`,
+    { topicId, input },
+  );
+
+  return data.addTask;
+}
+
+export async function updatePlanTask(taskId: string, input: TaskInput): Promise<ApiPlan> {
+  const data = await plannerQuery<{ updateTask: ApiPlan }>(
+    `mutation UpdateTask($taskId: ID!, $input: UpdateTaskInput!) {
+      updateTask(taskId: $taskId, input: $input) {
+        id
+        title
+        userId
+        progress
+        createdAt
+        topics {
+          id
+          name
+          tasks {
+            id
+            title
+            timeMinutes
+            status
+            deadline
+          }
+        }
+      }
+    }`,
+    { taskId, input },
+  );
+
+  return data.updateTask;
+}
+
+export async function deletePlanTask(taskId: string): Promise<ApiPlan> {
+  const data = await plannerQuery<{ deleteTask: ApiPlan }>(
+    `mutation DeleteTask($taskId: ID!) {
+      deleteTask(taskId: $taskId) {
+        id
+        title
+        userId
+        progress
+        createdAt
+        topics {
+          id
+          name
+          tasks {
+            id
+            title
+            timeMinutes
+            status
+            deadline
+          }
+        }
+      }
+    }`,
+    { taskId },
+  );
+
+  return data.deleteTask;
 }
 
 export async function getProgressSessions(userId: string): Promise<ProgressSession[]> {

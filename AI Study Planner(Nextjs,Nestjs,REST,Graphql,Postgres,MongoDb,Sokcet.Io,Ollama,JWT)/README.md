@@ -241,6 +241,13 @@ ollama pull llama3.2
 - Planner/seed issues: verify PostgreSQL credentials in `database/.env` and service `.env` files match.
 - Progress issues: verify MongoDB is running and `MONGO_URI` is valid.
 
+## Deployment
+
+Deployment guides are included for both managed and VM-based GCP targets:
+
+- [deploy/gcp-vm/README.md](deploy/gcp-vm/README.md) for running the full stack on one GCP VM with Docker Compose
+- [deploy/cloud-run/README.md](deploy/cloud-run/README.md) for a split multi-service Cloud Run deployment
+
 ## Tech Stack
 
 - Next.js 14

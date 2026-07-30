@@ -15,6 +15,25 @@ type LoginPayload = {
   password: string;
 };
 
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+function isValidAuthUser(value: unknown): value is AuthUser {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<AuthUser>;
+  return (
+    typeof candidate.id === "string" &&
+    isUuid(candidate.id) &&
+    typeof candidate.email === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.plan === "string"
+  );
+}
+
 type AuthContextValue = {
   user: AuthUser | null;
   token: string | null;
@@ -43,9 +62,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser) as AuthUser);
+        const parsedUser = JSON.parse(storedUser) as unknown;
+        if (isValidAuthUser(parsedUser)) {
+          setUser(parsedUser);
+        } else {
+          window.localStorage.removeItem(USER_KEY);
+          window.localStorage.removeItem(TOKEN_KEY);
+        }
       } catch {
         window.localStorage.removeItem(USER_KEY);
+        window.localStorage.removeItem(TOKEN_KEY);
       }
     }
 
@@ -55,9 +81,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function login(payload: LoginPayload) {
     const response = await authApi.post("/api/auth/login", payload);
     const nextToken = response.data?.access_token as string | undefined;
-    const nextUser = response.data?.user as AuthUser | undefined;
+    const nextUser = response.data?.user as unknown;
 
-    if (!nextToken || !nextUser) {
+    if (!nextToken || !isValidAuthUser(nextUser)) {
       throw new Error("Invalid login response");
     }
 

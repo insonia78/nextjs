@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Circle, Flame, Bot } from "lucide-react";
 import Link from "next/link";
 import styles from "./styles.module.css";
@@ -15,25 +15,37 @@ import {
   getProgressSessions,
   getProgressStats,
   submitProgress,
+  updatePlanTaskStatus,
   type ApiPlan,
 } from "@/lib/study-planner-api";
 import { useAuth } from "@/lib/auth-context";
 
 function deriveTodayPlan(plans: ApiPlan[]): TodayPlanItem[] {
   return plans
-    .flatMap((plan) =>
-      plan.topics.map((topic) => ({
-        subject: topic.name,
-        taskCount: topic.tasks.length,
-        timeMinutes: topic.tasks.reduce((sum, t) => sum + (t.timeMinutes ?? 30), 0),
-        status: topic.tasks.some((t) => t.status === "in_progress")
+    .map((plan) => {
+      const tasks = plan.topics.flatMap((topic) => topic.tasks);
+      const status = tasks.some((t) => t.status === "in_progress")
           ? ("in_progress" as const)
-          : topic.tasks.length > 0 && topic.tasks.every((t) => t.status === "completed")
+          : tasks.length > 0 && tasks.every((t) => t.status === "completed")
             ? ("completed" as const)
-            : ("pending" as const),
-      }))
-    )
-    .slice(0, 3);
+            : ("pending" as const);
+
+      return {
+        subject: plan.title,
+        taskCount: tasks.length,
+        timeMinutes: tasks.reduce((sum, t) => sum + (t.timeMinutes ?? 30), 0),
+        status,
+      };
+    })
+    .sort((left, right) => {
+      const rank = { in_progress: 0, pending: 1, completed: 2 };
+      const statusOrder = rank[left.status] - rank[right.status];
+      if (statusOrder !== 0) {
+        return statusOrder;
+      }
+
+      return right.taskCount - left.taskCount;
+    });
 }
 
 function findFirstPendingTask(
@@ -96,13 +108,10 @@ export default function DashboardFeature() {
   const [error, setError] = useState<string | null>(null);
   const [startTaskId, setStartTaskId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!userId) return;
-    const currentUserId = userId;
-
-    async function loadDashboard() {
+  const loadDashboard = useCallback(async (currentUserId: string) => {
       try {
         setLoading(true);
+        setError(null);
         const [plans, sessions, loadedStats] = await Promise.all([
           getPlans(currentUserId),
           getProgressSessions(currentUserId),
@@ -125,16 +134,24 @@ export default function DashboardFeature() {
 
         setStreak(calcStreak(sessions.map((s) => s.createdAt ?? "")));
 
+        setLoading(false);
+
         if (sessions.length > 0) {
-          const ai = await getAiRecommendation({
-            userId: currentUserId,
-            recentProgress: sessions.slice(0, 5).map((s) => ({
-              topic: s.topicId ?? "General",
-              timeSpent: s.timeSpent,
-              status: s.status,
-            })),
-          });
-          setRecommendation(ai.message || recommendation);
+          try {
+            const ai = await getAiRecommendation({
+              userId: currentUserId,
+              recentProgress: sessions.slice(0, 5).map((s) => ({
+                topic: s.topicId ?? "General",
+                timeSpent: s.timeSpent,
+                status: s.status,
+              })),
+            });
+            setRecommendation(ai.message || recommendation);
+          } catch {
+            setRecommendation(
+              "Connect AI service to generate personalized recommendations.",
+            );
+          }
         } else {
           setRecommendation(
             `You have ${loadedStats.totalSessions} session${loadedStats.totalSessions !== 1 ? "s" : ""} logged. Keep studying daily to build your streak!`,
@@ -142,26 +159,36 @@ export default function DashboardFeature() {
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load dashboard data");
-      } finally {
         setLoading(false);
+      } finally {
+        
       }
-    }
+    }, []);
 
-    void loadDashboard();
-  }, [userId]);
+  useEffect(() => {
+    if (!userId) return;
+    const currentUserId = userId;
+
+    void loadDashboard(currentUserId);
+  }, [loadDashboard, userId]);
 
   async function handleStartStudying() {
     if (!pendingTask || !userId) return;
     try {
       setStartTaskId(pendingTask.taskId);
-      await submitProgress({
-        userId,
-        taskId: pendingTask.taskId,
-        planId: pendingTask.planId,
-        topicId: pendingTask.topicId,
-        status: "in_progress",
-        timeSpent: 25,
-      });
+      setError(null);
+      await Promise.all([
+        submitProgress({
+          userId,
+          taskId: pendingTask.taskId,
+          planId: pendingTask.planId,
+          topicId: pendingTask.topicId,
+          status: "in_progress",
+          timeSpent: 25,
+        }),
+        updatePlanTaskStatus(pendingTask.taskId, "in_progress"),
+      ]);
+      await loadDashboard(userId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to start a study session");
     } finally {
