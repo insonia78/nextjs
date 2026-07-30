@@ -16,8 +16,10 @@ FROM deps AS builder
 WORKDIR /app
 ARG SERVICE_PATH
 COPY . ./
-RUN npm run build --workspace=$SERVICE_PATH \
- && test -f "$SERVICE_PATH/dist/main.js"
+RUN find /app -name "*.tsbuildinfo" -delete
+WORKDIR /app/$SERVICE_PATH
+RUN npm run build \
+ && test -f dist/main.js
 
 FROM node:20-alpine AS runner
 WORKDIR /app
