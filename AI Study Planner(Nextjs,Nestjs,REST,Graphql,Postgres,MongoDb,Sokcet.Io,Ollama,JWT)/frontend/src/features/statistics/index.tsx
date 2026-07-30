@@ -33,13 +33,15 @@ export default function StatisticsFeature() {
       return;
     }
 
+    const currentUserId = userId;
+
     async function loadStatistics() {
       try {
         setLoading(true);
         setError(null);
         const [nextStats, nextSessions] = await Promise.all([
-          getProgressStats(userId),
-          getProgressSessions(userId),
+          getProgressStats(currentUserId),
+          getProgressSessions(currentUserId),
         ]);
         setStats(nextStats);
         setSessions(nextSessions);

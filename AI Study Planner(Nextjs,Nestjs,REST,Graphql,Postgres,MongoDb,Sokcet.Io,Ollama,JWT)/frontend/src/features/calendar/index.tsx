@@ -54,11 +54,13 @@ export default function CalendarFeature() {
       return;
     }
 
+    const currentUserId = userId;
+
     async function loadCalendar() {
       try {
         setLoading(true);
         setError(null);
-        setPlans(await getPlans(userId));
+        setPlans(await getPlans(currentUserId));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load calendar");
       } finally {

@@ -49,11 +49,13 @@ export default function TasksFeature() {
       return;
     }
 
+    const currentUserId = userId;
+
     async function loadTasks() {
       try {
         setLoading(true);
         setError(null);
-        setPlans(await getPlans(userId));
+        setPlans(await getPlans(currentUserId));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load tasks");
       } finally {
