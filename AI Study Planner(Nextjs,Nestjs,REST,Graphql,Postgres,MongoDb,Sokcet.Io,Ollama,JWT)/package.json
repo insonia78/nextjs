@@ -12,12 +12,12 @@
     "services/shared-rest"
   ],
   "scripts": {
-    "dev:frontend": "set NEXT_TELEMETRY_DISABLED=1&& npm run dev --workspace=frontend",
-    "dev:auth": "npm run start:dev --workspace=services/auth-service",
-    "dev:planner": "npm run start:dev --workspace=services/planner-service",
-    "dev:progress": "npm run start:dev --workspace=services/progress-service",
-    "dev:ai": "npm run start:dev --workspace=services/ai-service",
-    "dev:gateway": "npm run start:dev --workspace=services/gateway-service",
+    "dev:frontend": "set NEXT_TELEMETRY_DISABLED=1&& npm --prefix frontend run dev",
+    "dev:auth": "npm --prefix services/auth-service run start:dev",
+    "dev:planner": "npm --prefix services/planner-service run start:dev",
+    "dev:progress": "npm --prefix services/progress-service run start:dev",
+    "dev:ai": "npm --prefix services/ai-service run start:dev",
+    "dev:gateway": "npm --prefix services/gateway-service run start:dev",
     "dev": "concurrently \"npm run dev:gateway\" \"npm run dev:frontend\" \"npm run dev:auth\" \"npm run dev:planner\" \"npm run dev:progress\" \"npm run dev:ai\"",
     "seed:postgres": "ts-node -r dotenv/config database/postgres/seeds/index.ts dotenv_config_path=database/.env",
     "seed:mongo": "ts-node -r dotenv/config database/mongodb/seeds/index.ts dotenv_config_path=database/.env",

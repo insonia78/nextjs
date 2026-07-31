@@ -97,9 +97,9 @@ export default function AiFeature() {
 
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <section className={`${styles.panel} p-5 space-y-4`}>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-gray-800 font-semibold">
               <Bot size={18} />
               Smart Recommendation
@@ -114,7 +114,7 @@ export default function AiFeature() {
           <button
             onClick={handleGetRecommendation}
             disabled={!userId || loadingRecommendation}
-            className="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition disabled:opacity-50"
+            className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-50 sm:w-auto"
           >
             {loadingRecommendation ? "Generating..." : "Get Recommendation"}
           </button>
@@ -131,7 +131,7 @@ export default function AiFeature() {
         </section>
 
         <section className={`${styles.panel} p-5 space-y-4`}>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-gray-800 font-semibold">
               <Sparkles size={18} />
               AI Plan Generator
@@ -160,7 +160,7 @@ export default function AiFeature() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hours/Day</label>
                 <input
@@ -187,7 +187,7 @@ export default function AiFeature() {
           <button
             onClick={handleGeneratePlan}
             disabled={!userId || loadingPlan}
-            className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-50 sm:w-auto"
           >
             <Wand2 size={16} />
             {loadingPlan ? "Generating..." : "Generate AI Plan"}
@@ -206,7 +206,7 @@ export default function AiFeature() {
                 <p className="text-lg font-semibold text-gray-800">{parsedPlan.title}</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 {parsedPlan.topics.map((topic, idx) => (
                   <article key={`${topic.name}-${idx}`} className={`${styles.topicCard} p-3`}>
                     <h3 className="font-semibold text-sm text-gray-800">{topic.name}</h3>

@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Search, X } from "lucide-react";
+import { Bell, Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -63,7 +63,11 @@ function getDismissedNotificationsKey(userId: string) {
   return `study-planner-dismissed-notifications:${userId}`;
 }
 
-export default function Header() {
+type HeaderProps = {
+  onMenuToggle: () => void;
+};
+
+export default function Header({ onMenuToggle }: HeaderProps) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const initials = user?.name
@@ -148,19 +152,28 @@ export default function Header() {
   }
 
   return (
-    <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 shrink-0">
-      {/* Search */}
-      <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-72">
-        <Search size={16} className="text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search anything..."
-          className="bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none w-full"
-        />
-      </div>
+    <header className="shrink-0 border-b border-gray-100 bg-white px-4 py-3 sm:px-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onMenuToggle}
+            className="inline-flex rounded-xl border border-gray-200 p-2 text-gray-600 transition hover:bg-gray-50 lg:hidden"
+            aria-label="Open navigation"
+          >
+            <Menu size={18} />
+          </button>
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 sm:max-w-md sm:flex-none sm:w-full">
+            <Search size={16} className="shrink-0 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search anything..."
+              className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
+            />
+          </div>
+        </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-4">
         <div className="relative" ref={panelRef}>
           <button
             className="relative p-2 rounded-full hover:bg-gray-100 transition"
@@ -176,7 +189,7 @@ export default function Header() {
           </button>
 
           {notificationsOpen ? (
-            <div className="absolute right-0 top-full mt-2 w-96 rounded-2xl border border-gray-200 bg-white shadow-xl z-20 overflow-hidden">
+            <div className="absolute right-0 top-full z-20 mt-2 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                 <div>
                   <p className="text-sm font-semibold text-gray-800">Notifications</p>
@@ -217,21 +230,22 @@ export default function Header() {
             </div>
           ) : null}
         </div>
-        <div className="flex items-center gap-2 cursor-pointer">
-          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-semibold text-sm">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
             {initials || "U"}
           </div>
-          <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold text-gray-800">{user?.name ?? "User"}</span>
-            <span className="text-xs text-primary font-medium">{user?.plan ?? "free"}</span>
+          <div className="min-w-0 leading-tight">
+            <span className="block truncate text-sm font-semibold text-gray-800">{user?.name ?? "User"}</span>
+            <span className="block truncate text-xs font-medium text-primary">{user?.plan ?? "free"}</span>
           </div>
         </div>
         <button
-          className="text-xs font-semibold text-gray-500 hover:text-gray-700"
+          className="shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-700"
           onClick={logout}
         >
           Logout
         </button>
+      </div>
       </div>
     </header>
   );

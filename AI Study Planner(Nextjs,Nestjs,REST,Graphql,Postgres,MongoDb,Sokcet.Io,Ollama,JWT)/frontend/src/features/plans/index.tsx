@@ -42,7 +42,7 @@ function PlanCard({ plan, onDelete, deleting }: PlanCardProps) {
 
   return (
     <Link href={`/plans/${plan.id}`}>
-      <div className={`card flex items-center gap-4 cursor-pointer ${styles.planCard} hover:shadow-md transition`}>
+      <div className={`card cursor-pointer ${styles.planCard} flex flex-col gap-4 hover:shadow-md transition sm:flex-row sm:items-center`}>
         <div
           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
           style={{ backgroundColor: plan.color + "20" }}
@@ -59,27 +59,29 @@ function PlanCard({ plan, onDelete, deleting }: PlanCardProps) {
             />
           </div>
         </div>
-        <span className="text-sm font-semibold text-gray-600 shrink-0">{plan.progress}%</span>
-        <div className="relative" onClick={(e) => e.preventDefault()}>
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-1 rounded hover:bg-gray-100"
-            disabled={deleting || isDeleting}
-          >
-            <MoreVertical size={16} className="text-gray-400" />
-          </button>
-          {showMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition disabled:opacity-50"
-              >
-                <Trash2 size={16} />
-                {isDeleting ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          )}
+        <div className="flex items-center justify-between gap-3 sm:justify-end">
+          <span className="text-sm font-semibold text-gray-600 shrink-0">{plan.progress}%</span>
+          <div className="relative" onClick={(e) => e.preventDefault()}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-1 rounded hover:bg-gray-100"
+              disabled={deleting || isDeleting}
+            >
+              <MoreVertical size={16} className="text-gray-400" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Link>
@@ -184,12 +186,12 @@ export default function PlansFeature() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-gray-800">My Plans</h1>
         <button
           onClick={openDialog}
           disabled={creating}
-          className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-50 sm:w-auto"
         >
           <Plus size={16} />
           New Plan
@@ -200,8 +202,8 @@ export default function PlansFeature() {
 
       {/* New Plan Dialog */}
       {showDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+        <div className="fixed inset-0 z-50 bg-black/40 px-4 py-6 sm:flex sm:items-center sm:justify-center">
+          <div className="relative max-h-full w-full overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:max-w-md">
             <button
               onClick={() => setShowDialog(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -257,7 +259,7 @@ export default function PlansFeature() {
               <p className="text-xs text-red-500 mb-3">{dialogError}</p>
             )}
 
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
                 onClick={() => setShowDialog(false)}
                 className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition"
@@ -267,7 +269,7 @@ export default function PlansFeature() {
               <button
                 onClick={handleCreatePlan}
                 disabled={creating}
-                className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-primary-dark transition disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-50"
               >
                 {creating ? "Creating..." : "Create Plan"}
               </button>
@@ -277,12 +279,12 @@ export default function PlansFeature() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="mb-6 flex w-full gap-1 overflow-x-auto rounded-xl bg-gray-100 p-1 sm:w-fit">
         {PLAN_TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
               activeTab === tab
                 ? "bg-white text-primary shadow-sm"
                 : "text-gray-500 hover:text-gray-700"

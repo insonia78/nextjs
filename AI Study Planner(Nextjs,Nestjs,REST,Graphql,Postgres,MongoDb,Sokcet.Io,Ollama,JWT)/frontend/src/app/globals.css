@@ -4,6 +4,10 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   @apply text-gray-800;
 }
@@ -18,6 +22,12 @@ body {
 
 .card {
   @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-5;
+}
+
+@media (max-width: 640px) {
+  .card {
+    @apply p-4;
+  }
 }
 
 .badge-inprogress {

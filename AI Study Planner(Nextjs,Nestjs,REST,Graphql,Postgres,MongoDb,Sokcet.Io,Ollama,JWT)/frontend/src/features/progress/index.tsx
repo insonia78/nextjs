@@ -89,7 +89,7 @@ export default function ProgressFeature() {
       {error ? <p className="text-sm text-red-500 mb-4">{error}</p> : null}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
         {[
           { label: "Total Study Hours", value: studyHours },
           { label: "Tasks Completed", value: String(stats.completed) },
@@ -106,15 +106,19 @@ export default function ProgressFeature() {
       <div className="card">
         <h2 className="font-semibold text-gray-800 mb-4">Weekly Study Minutes</h2>
         {loading ? <p className="text-sm text-gray-400 mb-4">Loading chart...</p> : null}
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={weeklyData} barSize={28}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Bar dataKey="minutes" fill="#6C47FF" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="h-[220px] w-full overflow-x-auto">
+          <div className="h-full min-w-[320px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyData} barSize={28}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} width={32} />
+                <Tooltip />
+                <Bar dataKey="minutes" fill="#6C47FF" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </div>
   );

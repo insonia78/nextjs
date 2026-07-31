@@ -86,7 +86,7 @@ export default function StatisticsFeature() {
 
       {error ? <p className="text-sm text-red-500 mb-4">{error}</p> : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="card">
           <div className="flex items-center gap-3 mb-3 text-primary">
             <Clock3 size={18} />
@@ -120,7 +120,7 @@ export default function StatisticsFeature() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Study Summary</h2>
           <div className="space-y-3 text-sm">
@@ -148,7 +148,7 @@ export default function StatisticsFeature() {
           {!loading && sessions.length > 0 ? (
             <div className="space-y-3">
               {sessions.slice(0, 5).map((session, index) => (
-                <div key={`${session.createdAt ?? "session"}-${index}`} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+                <div key={`${session.createdAt ?? "session"}-${index}`} className="flex flex-col gap-2 border-b border-gray-100 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-800">{session.status.replace("_", " ")}</p>
                     <p className="text-xs text-gray-500">

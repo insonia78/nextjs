@@ -107,14 +107,14 @@ export default function CalendarFeature() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Calendar</h1>
           <p className="text-sm text-gray-500 mt-1">See your study tasks grouped by planned deadline.</p>
         </div>
         <Link
           href="/plans"
-          className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark sm:w-auto"
         >
           Open Plans
           <ArrowRight size={16} />
@@ -123,7 +123,7 @@ export default function CalendarFeature() {
 
       {error ? <p className="text-sm text-red-500 mb-4">{error}</p> : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="card">
           <p className="text-sm text-gray-500">Scheduled Tasks</p>
           <p className="text-3xl font-bold text-gray-800 mt-2">{tasks.length}</p>
@@ -157,7 +157,7 @@ export default function CalendarFeature() {
                     const isCompleted = task.status === "completed";
 
                     return (
-                      <div key={task.taskId} className="flex items-center gap-4 rounded-xl border border-gray-100 p-4 hover:bg-gray-50 transition">
+                      <div key={task.taskId} className="flex flex-col gap-3 rounded-xl border border-gray-100 p-4 transition hover:bg-gray-50 sm:flex-row sm:items-center">
                         <input
                           type="checkbox"
                           checked={isCompleted}
@@ -166,7 +166,7 @@ export default function CalendarFeature() {
                           className="w-5 h-5 text-primary rounded shrink-0"
                         />
 
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             {isCompleted ? (
                               <CheckCircle2 size={16} className="text-green-600 shrink-0" />
@@ -180,7 +180,7 @@ export default function CalendarFeature() {
                           <p className="text-sm text-gray-500">{task.planTitle} · {task.topicName}</p>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm text-gray-500 shrink-0">
+                        <div className="flex items-center gap-2 text-sm text-gray-500 shrink-0 sm:self-center">
                           <Clock3 size={14} />
                           <span>{task.timeMinutes}m</span>
                         </div>

@@ -223,7 +223,7 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
     ) ?? 0;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
       {/* Header */}
       <Link
         href="/plans"
@@ -241,10 +241,10 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
 
       {/* Plan Title and Stats */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">{plan.title}</h1>
+        <h1 className="mb-4 text-3xl font-bold text-gray-800 sm:text-4xl">{plan.title}</h1>
 
         {plan.description && (
-          <p className="text-gray-600 mb-6 text-lg">{plan.description}</p>
+          <p className="mb-6 text-base text-gray-600 sm:text-lg">{plan.description}</p>
         )}
 
         {/* Progress Bar */}
@@ -262,7 +262,7 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="bg-blue-50 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-primary mb-1">{totalTasks}</div>
             <p className="text-sm text-gray-600">Total Tasks</p>
@@ -285,8 +285,8 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
         {plan.topics && plan.topics.length > 0 ? (
           plan.topics.map((topic) => (
             <div key={topic.id} className="card p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start gap-3 flex-1">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-1 items-start gap-3">
                   <BookOpen className="text-primary mt-1 shrink-0" size={20} />
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">{topic.name}</h3>
@@ -300,7 +300,7 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
                 <button
                   type="button"
                   onClick={() => openAddTask(topic.id)}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark sm:self-start"
                 >
                   <Plus size={16} />
                   Add Task
@@ -334,7 +334,7 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
                     />
                   </div>
 
-                  <div className="mt-3 flex items-center justify-end gap-3">
+                  <div className="mt-3 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                     <button
                       type="button"
                       onClick={closeTaskEditor}
@@ -380,49 +380,55 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
                   {topic.tasks.map((task) => (
                     <div
                       key={task.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                      className="flex flex-col gap-3 rounded-lg bg-gray-50 p-3 transition hover:bg-gray-100 sm:flex-row sm:items-center"
                     >
-                      <input
-                        type="checkbox"
-                        checked={task.status === "completed"}
-                        disabled={updatingTaskId === task.id || deletingTaskId === task.id}
-                        onChange={(e) => void handleToggleTask(task.id, e.target.checked)}
-                        className="w-5 h-5 text-primary rounded"
-                      />
-                      <span
-                        className={`flex-1 text-sm ${
-                          task.status === "completed"
-                            ? "line-through text-gray-400"
-                            : "text-gray-700"
-                        }`}
-                      >
-                        {task.title}
-                      </span>
-                      {task.timeMinutes && (
-                        <div className="flex items-center gap-1 text-gray-500 text-xs">
-                          <Clock size={14} />
-                          {task.timeMinutes}m
+                      <div className="flex items-start gap-3 sm:flex-1 sm:items-center">
+                        <input
+                          type="checkbox"
+                          checked={task.status === "completed"}
+                          disabled={updatingTaskId === task.id || deletingTaskId === task.id}
+                          onChange={(e) => void handleToggleTask(task.id, e.target.checked)}
+                          className="mt-0.5 h-5 w-5 rounded text-primary sm:mt-0"
+                        />
+                        <span
+                          className={`flex-1 text-sm ${
+                            task.status === "completed"
+                              ? "line-through text-gray-400"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {task.title}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 sm:justify-end">
+                        {task.timeMinutes && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Clock size={14} />
+                            {task.timeMinutes}m
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 sm:gap-0">
+                          <button
+                            type="button"
+                            onClick={() => openEditTask(topic.id, task)}
+                            disabled={deletingTaskId === task.id}
+                            className="rounded-lg p-1 text-gray-400 transition hover:bg-white hover:text-primary"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteTask(task.id)}
+                            disabled={deletingTaskId === task.id}
+                            className="rounded-lg p-1 text-gray-400 transition hover:bg-white hover:text-red-500 disabled:opacity-50"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                          {task.status === "completed" && (
+                            <CheckCircle className="shrink-0 text-green-600" size={18} />
+                          )}
                         </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => openEditTask(topic.id, task)}
-                        disabled={deletingTaskId === task.id}
-                        className="rounded-lg p-1 text-gray-400 hover:bg-white hover:text-primary transition"
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleDeleteTask(task.id)}
-                        disabled={deletingTaskId === task.id}
-                        className="rounded-lg p-1 text-gray-400 hover:bg-white hover:text-red-500 transition disabled:opacity-50"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                      {task.status === "completed" && (
-                        <CheckCircle className="text-green-600 shrink-0" size={18} />
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>

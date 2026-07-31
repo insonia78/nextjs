@@ -199,16 +199,16 @@ export default function DashboardFeature() {
   return (
     <div>
       {/* Greeting */}
-      <h1 className="text-2xl font-bold text-gray-800 mb-1">
+      <h1 className="mb-1 text-2xl font-bold text-gray-800 sm:text-3xl">
         {getGreeting()}, {user?.name || user?.email?.split("@")[0] || "there"}! 👋
       </h1>
       <p className="text-gray-500 text-sm mb-6">Let&apos;s achieve your goals today.</p>
       {error ? <p className="text-sm text-red-500 mb-4">{error}</p> : null}
 
-      <div className="grid grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
         {/* Today's Plan */}
-        <div className="col-span-12 lg:col-span-7 card">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card xl:col-span-7">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="font-semibold text-gray-800">Today&apos;s Plan</h2>
             <span className="text-xs text-gray-400">{today}</span>
           </div>
@@ -221,7 +221,7 @@ export default function DashboardFeature() {
             {todayPlan.map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                className="flex flex-col gap-3 border-b border-gray-50 py-2 last:border-0 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-center gap-3">
                   {item.status === "completed" ? (
@@ -253,10 +253,10 @@ export default function DashboardFeature() {
         </div>
 
         {/* Right column */}
-        <div className="col-span-12 lg:col-span-5 flex flex-col gap-5">
+        <div className="flex flex-col gap-5 xl:col-span-5">
           {/* Overall Progress */}
-          <div className="card flex items-center gap-5">
-            <div className="relative w-24 h-24 shrink-0">
+          <div className="card flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="relative h-24 w-24 shrink-0">
               <svg viewBox="0 0 36 36" className="w-full h-full">
                 <circle
                   cx="18" cy="18" r="15.9"
@@ -288,13 +288,13 @@ export default function DashboardFeature() {
           </div>
 
           {/* Study Streak */}
-          <div className={`${styles.streakBadge} flex items-center gap-4`}>
+          <div className={`${styles.streakBadge} flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4`}>
             <Flame size={32} />
             <div>
               <p className="text-2xl font-bold">{streak}</p>
               <p className="text-sm opacity-80">days in a row</p>
             </div>
-            <span className="ml-auto text-sm font-semibold opacity-90">Study Streak</span>
+            <span className="text-sm font-semibold opacity-90 sm:ml-auto">Study Streak</span>
           </div>
 
           {/* AI Recommendation */}

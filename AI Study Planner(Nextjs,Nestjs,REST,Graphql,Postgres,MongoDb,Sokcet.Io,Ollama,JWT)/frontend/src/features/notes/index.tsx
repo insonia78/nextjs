@@ -68,11 +68,11 @@ export default function NotesFeature() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
             type="button"
             onClick={handleReset}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 sm:w-auto"
           >
             <RotateCcw size={16} />
             Reset
@@ -81,7 +81,7 @@ export default function NotesFeature() {
             type="button"
             onClick={handleSave}
             disabled={!userId}
-            className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-dark transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             <Save size={16} />
             Save Notes
@@ -89,7 +89,7 @@ export default function NotesFeature() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="card">
           <textarea
             value={notes}
