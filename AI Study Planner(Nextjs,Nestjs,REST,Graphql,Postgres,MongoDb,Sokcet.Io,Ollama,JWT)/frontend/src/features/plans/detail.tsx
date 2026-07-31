@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, BookOpen, CheckCircle, Clock, AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import TaskCompletionTimer from "@/components/TaskCompletionTimer";
 import {
   addPlanTask,
   deletePlanTask,
@@ -68,14 +69,14 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
     void loadPlan();
   }, [user?.id, planId]);
 
-  async function handleToggleTask(taskId: string, completed: boolean) {
+  async function handleTaskStatusChange(
+    taskId: string,
+    status: "completed" | "in_progress" | "pending",
+  ) {
     try {
       setUpdatingTaskId(taskId);
       setError(null);
-      const updatedPlan = await updatePlanTaskStatus(
-        taskId,
-        completed ? "completed" : "pending",
-      );
+      const updatedPlan = await updatePlanTaskStatus(taskId, status);
       setPlan(updatedPlan as PlanDetail);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update task");
@@ -383,12 +384,15 @@ export default function PlanDetailFeature({ planId }: { planId: string }) {
                       className="flex flex-col gap-3 rounded-lg bg-gray-50 p-3 transition hover:bg-gray-100 sm:flex-row sm:items-center"
                     >
                       <div className="flex items-start gap-3 sm:flex-1 sm:items-center">
-                        <input
-                          type="checkbox"
-                          checked={task.status === "completed"}
+                        <TaskCompletionTimer
+                          userId={user.id}
+                          taskId={task.id}
+                          planId={plan.id}
+                          topicId={topic.id}
+                          status={task.status}
                           disabled={updatingTaskId === task.id || deletingTaskId === task.id}
-                          onChange={(e) => void handleToggleTask(task.id, e.target.checked)}
-                          className="mt-0.5 h-5 w-5 rounded text-primary sm:mt-0"
+                          onStatusChange={(status) => handleTaskStatusChange(task.id, status)}
+                          onError={(message) => setError(message)}
                         />
                         <span
                           className={`flex-1 text-sm ${

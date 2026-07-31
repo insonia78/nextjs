@@ -1,6 +1,7 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Circle, Flame, Bot } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Circle, Flame, Bot, Clock3, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import styles from "./styles.module.css";
 import {
@@ -14,11 +15,25 @@ import {
   getPlans,
   getProgressSessions,
   getProgressStats,
-  submitProgress,
   updatePlanTaskStatus,
   type ApiPlan,
 } from "@/lib/study-planner-api";
 import { useAuth } from "@/lib/auth-context";
+import {
+  formatTaskElapsed,
+  readActiveTaskTimer,
+  startTaskTimer,
+  subscribeToTaskTimerUpdates,
+} from "@/lib/task-timer-storage";
+
+type ActiveTaskDetails = {
+  taskId: string;
+  title: string;
+  planTitle: string;
+  topicName: string;
+  elapsedSeconds: number;
+  startedAt: string | null;
+};
 
 function deriveTodayPlan(plans: ApiPlan[]): TodayPlanItem[] {
   return plans
@@ -50,13 +65,20 @@ function deriveTodayPlan(plans: ApiPlan[]): TodayPlanItem[] {
 
 function findFirstPendingTask(
   plans: ApiPlan[],
-): { taskId: string; planId: string; topicId: string } | null {
+): { taskId: string; planId: string; topicId: string; status: "pending" | "in_progress" } | null {
   for (const plan of plans) {
     for (const topic of plan.topics) {
       const task = topic.tasks.find(
         (t) => t.status === "pending" || t.status === "in_progress",
       );
-      if (task) return { taskId: task.id, planId: plan.id, topicId: topic.id };
+      if (task) {
+        return {
+          taskId: task.id,
+          planId: plan.id,
+          topicId: topic.id,
+          status: task.status === "in_progress" ? "in_progress" : "pending",
+        };
+      }
     }
   }
   return null;
@@ -92,21 +114,65 @@ function calcStreak(dates: string[]): number {
   return streak;
 }
 
+function getLiveElapsedSeconds(elapsedSeconds: number, startedAt: string | null, now: number) {
+  if (!startedAt) {
+    return elapsedSeconds;
+  }
+
+  const startedAtMs = new Date(startedAt).getTime();
+  const runningSeconds = Number.isFinite(startedAtMs)
+    ? Math.max(0, Math.floor((now - startedAtMs) / 1000))
+    : 0;
+
+  return elapsedSeconds + runningSeconds;
+}
+
+function findActiveTaskDetails(plans: ApiPlan[], userId: string): ActiveTaskDetails | null {
+  const activeTimer = readActiveTaskTimer(userId);
+  if (!activeTimer) {
+    return null;
+  }
+
+  for (const plan of plans) {
+    for (const topic of plan.topics) {
+      const task = topic.tasks.find((entry) => entry.id === activeTimer.taskId);
+      if (!task) {
+        continue;
+      }
+
+      return {
+        taskId: task.id,
+        title: task.title,
+        planTitle: plan.title,
+        topicName: topic.name,
+        elapsedSeconds: activeTimer.snapshot.elapsedSeconds,
+        startedAt: activeTimer.snapshot.startedAt,
+      };
+    }
+  }
+
+  return null;
+}
+
 export default function DashboardFeature() {
   const { user } = useAuth();
+  const router = useRouter();
   const userId = user?.id;
   const today = formatDate(new Date());
   const [todayPlan, setTodayPlan] = useState<TodayPlanItem[]>([]);
+  const [plans, setPlans] = useState<ApiPlan[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
   const [streak, setStreak] = useState(0);
   const [recommendation, setRecommendation] = useState(
     "Connect AI service to generate personalized recommendations.",
   );
   const [stats, setStats] = useState<{ totalMinutes: number; totalSessions: number; completed: number } | null>(null);
-  const [pendingTask, setPendingTask] = useState<{ taskId: string; planId: string; topicId: string } | null>(null);
+  const [pendingTask, setPendingTask] = useState<{ taskId: string; planId: string; topicId: string; status: "pending" | "in_progress" } | null>(null);
+  const [activeTask, setActiveTask] = useState<ActiveTaskDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startTaskId, setStartTaskId] = useState<string | null>(null);
+  const [activeTimerNow, setActiveTimerNow] = useState(() => Date.now());
 
   const loadDashboard = useCallback(async (currentUserId: string) => {
       try {
@@ -118,9 +184,11 @@ export default function DashboardFeature() {
           getProgressStats(currentUserId),
         ]);
 
+        setPlans(plans);
         const computedPlan = deriveTodayPlan(plans);
         setTodayPlan(computedPlan);
         setPendingTask(findFirstPendingTask(plans));
+        setActiveTask(findActiveTaskDetails(plans, currentUserId));
         setStats(loadedStats);
 
         if (plans.length > 0) {
@@ -172,23 +240,49 @@ export default function DashboardFeature() {
     void loadDashboard(currentUserId);
   }, [loadDashboard, userId]);
 
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
+    return subscribeToTaskTimerUpdates(userId, () => {
+      setActiveTask(findActiveTaskDetails(plans, userId));
+      setActiveTimerNow(Date.now());
+    });
+  }, [plans, userId]);
+
+  useEffect(() => {
+    if (!activeTask?.startedAt) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActiveTimerNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [activeTask?.startedAt]);
+
+  const activeTaskElapsed = useMemo(() => {
+    if (!activeTask) {
+      return 0;
+    }
+
+    return getLiveElapsedSeconds(activeTask.elapsedSeconds, activeTask.startedAt, activeTimerNow);
+  }, [activeTask, activeTimerNow]);
+
   async function handleStartStudying() {
     if (!pendingTask || !userId) return;
     try {
       setStartTaskId(pendingTask.taskId);
       setError(null);
-      await Promise.all([
-        submitProgress({
-          userId,
-          taskId: pendingTask.taskId,
-          planId: pendingTask.planId,
-          topicId: pendingTask.topicId,
-          status: "in_progress",
-          timeSpent: 25,
-        }),
-        updatePlanTaskStatus(pendingTask.taskId, "in_progress"),
-      ]);
-      await loadDashboard(userId);
+
+      if (pendingTask.status === "pending") {
+        await updatePlanTaskStatus(pendingTask.taskId, "in_progress");
+      }
+
+      startTaskTimer(userId, pendingTask.taskId);
+      router.push(`/tasks?activeTask=${pendingTask.taskId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to start a study session");
     } finally {
@@ -248,12 +342,42 @@ export default function DashboardFeature() {
             disabled={loading || pendingTask === null || startTaskId !== null}
             className="mt-5 w-full bg-primary text-white py-3 rounded-xl font-semibold text-sm hover:bg-primary-dark transition disabled:opacity-50"
           >
-            {startTaskId ? "Starting..." : "Start Studying"}
+            {startTaskId ? "Starting..." : activeTask ? "Resume Studying" : "Start Studying"}
           </button>
         </div>
 
         {/* Right column */}
         <div className="flex flex-col gap-5 xl:col-span-5">
+          {activeTask ? (
+            <div className="card border border-primary/10 bg-primary/5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <PlayCircle size={16} />
+                    Active Study Session
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-gray-800">{activeTask.title}</p>
+                  <p className="mt-1 text-sm text-gray-500">{activeTask.planTitle} · {activeTask.topicName}</p>
+                </div>
+                <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-primary/10">
+                  <p className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                    <Clock3 size={14} />
+                    Running Time
+                  </p>
+                  <p className="mt-1 text-lg font-bold tabular-nums text-primary">
+                    {formatTaskElapsed(activeTaskElapsed)}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href={`/tasks?activeTask=${activeTask.taskId}`}
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-dark"
+              >
+                Open active task
+              </Link>
+            </div>
+          ) : null}
+
           {/* Overall Progress */}
           <div className="card flex flex-col gap-5 sm:flex-row sm:items-center">
             <div className="relative h-24 w-24 shrink-0">

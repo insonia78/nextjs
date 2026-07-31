@@ -2,7 +2,7 @@
 import { Bell, Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { getPlans, type ApiPlan } from "@/lib/study-planner-api";
 import { useAuth } from "@/lib/auth-context";
 
@@ -11,6 +11,14 @@ type NotificationItem = {
   title: string;
   message: string;
   href: string;
+};
+
+type SearchResult = {
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  kind: "plan" | "topic" | "task";
 };
 
 function buildNotifications(plans: ApiPlan[]): NotificationItem[] {
@@ -63,6 +71,53 @@ function getDismissedNotificationsKey(userId: string) {
   return `study-planner-dismissed-notifications:${userId}`;
 }
 
+function buildSearchResults(plans: ApiPlan[], query: string): SearchResult[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const results: SearchResult[] = [];
+
+  for (const plan of plans) {
+    if (plan.title.toLowerCase().includes(normalizedQuery)) {
+      results.push({
+        id: `plan-${plan.id}`,
+        title: plan.title,
+        subtitle: "Plan",
+        href: `/plans/${plan.id}`,
+        kind: "plan",
+      });
+    }
+
+    for (const topic of plan.topics) {
+      if (topic.name.toLowerCase().includes(normalizedQuery)) {
+        results.push({
+          id: `topic-${topic.id}`,
+          title: topic.name,
+          subtitle: `${plan.title} · Topic`,
+          href: `/plans/${plan.id}`,
+          kind: "topic",
+        });
+      }
+
+      for (const task of topic.tasks) {
+        if (task.title.toLowerCase().includes(normalizedQuery)) {
+          results.push({
+            id: `task-${task.id}`,
+            title: task.title,
+            subtitle: `${plan.title} · ${topic.name} · Task`,
+            href: `/plans/${plan.id}`,
+            kind: "task",
+          });
+        }
+      }
+    }
+  }
+
+  return results.slice(0, 8);
+}
+
 type HeaderProps = {
   onMenuToggle: () => void;
 };
@@ -70,6 +125,7 @@ type HeaderProps = {
 export default function Header({ onMenuToggle }: HeaderProps) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const initials = user?.name
     ?.split(" ")
     .map((part) => part[0])
@@ -78,7 +134,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
     .toUpperCase();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [plans, setPlans] = useState<ApiPlan[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const searchRef = useRef<HTMLDivElement | null>(null);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -111,12 +171,14 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
     async function loadNotifications() {
       try {
-        const plans = await getPlans(userId);
-        const nextNotifications = buildNotifications(plans).filter(
+        const nextPlans = await getPlans(userId);
+        setPlans(nextPlans);
+        const nextNotifications = buildNotifications(nextPlans).filter(
           (notification) => !dismissedIds.includes(notification.id),
         );
         setNotifications(nextNotifications);
       } catch {
+        setPlans([]);
         setNotifications([]);
       }
     }
@@ -129,6 +191,10 @@ export default function Header({ onMenuToggle }: HeaderProps) {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
         setNotificationsOpen(false);
       }
+
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
     }
 
     window.addEventListener("mousedown", handlePointerDown);
@@ -136,6 +202,25 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   }, []);
 
   const unreadCount = useMemo(() => notifications.length, [notifications]);
+  const searchResults = useMemo(
+    () => buildSearchResults(plans, searchQuery),
+    [plans, searchQuery],
+  );
+
+  function handleSearchSelect(href: string) {
+    setSearchOpen(false);
+    setSearchQuery("");
+    router.push(href);
+  }
+
+  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (searchResults.length === 0) {
+      return;
+    }
+
+    handleSearchSelect(searchResults[0].href);
+  }
 
   function handleDismissNotification(notificationId: string) {
     if (!user?.id) {
@@ -163,13 +248,53 @@ export default function Header({ onMenuToggle }: HeaderProps) {
           >
             <Menu size={18} />
           </button>
-          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 sm:max-w-md sm:flex-none sm:w-full">
-            <Search size={16} className="shrink-0 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search anything..."
-              className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
-            />
+          <div className="relative flex-1 sm:max-w-md sm:flex-none sm:w-full" ref={searchRef}>
+            <form
+              onSubmit={handleSearchSubmit}
+              className="flex min-w-0 items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2"
+            >
+              <Search size={16} className="shrink-0 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => {
+                  const nextQuery = event.target.value;
+                  setSearchQuery(nextQuery);
+                  setSearchOpen(nextQuery.trim().length > 0);
+                }}
+                onFocus={() => setSearchOpen(searchQuery.trim().length > 0)}
+                placeholder="Search anything..."
+                className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
+                aria-label="Search plans, topics, and tasks"
+              />
+            </form>
+
+            {searchOpen ? (
+              <div className="absolute left-0 top-full z-20 mt-2 w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+                {searchResults.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-gray-500">No matches found.</div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {searchResults.map((result) => (
+                      <button
+                        key={result.id}
+                        type="button"
+                        onClick={() => handleSearchSelect(result.href)}
+                        className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition hover:bg-gray-50"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-gray-800">{result.title}</p>
+                          <p className="truncate text-xs text-gray-500 mt-1">{result.subtitle}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                          {result.kind}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
 

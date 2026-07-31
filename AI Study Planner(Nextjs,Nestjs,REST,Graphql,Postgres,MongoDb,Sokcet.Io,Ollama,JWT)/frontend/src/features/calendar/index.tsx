@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Clock3, ArrowRight, CheckCircle2, Circle } from "lucide-react";
+import TaskCompletionTimer from "@/components/TaskCompletionTimer";
 import { useAuth } from "@/lib/auth-context";
 import { getPlans, type ApiPlan, updatePlanTaskStatus } from "@/lib/study-planner-api";
 
 type CalendarTask = {
   planId: string;
   planTitle: string;
+  topicId: string;
   topicName: string;
   taskId: string;
   title: string;
@@ -30,6 +32,7 @@ function flattenCalendarTasks(plans: ApiPlan[]): CalendarTask[] {
         .map((task) => ({
           planId: plan.id,
           planTitle: plan.title,
+          topicId: topic.id,
           topicName: topic.name,
           taskId: task.id,
           title: task.title,
@@ -71,11 +74,14 @@ export default function CalendarFeature() {
     void loadCalendar();
   }, [userId]);
 
-  async function handleToggleTask(taskId: string, completed: boolean) {
+  async function handleTaskStatusChange(
+    taskId: string,
+    status: "completed" | "in_progress" | "pending",
+  ) {
     try {
       setUpdatingTaskId(taskId);
       setError(null);
-      const updatedPlan = await updatePlanTaskStatus(taskId, completed ? "completed" : "pending");
+      const updatedPlan = await updatePlanTaskStatus(taskId, status);
       setPlans((currentPlans) => currentPlans.map((plan) => (plan.id === updatedPlan.id ? updatedPlan : plan)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update task");
@@ -158,12 +164,15 @@ export default function CalendarFeature() {
 
                     return (
                       <div key={task.taskId} className="flex flex-col gap-3 rounded-xl border border-gray-100 p-4 transition hover:bg-gray-50 sm:flex-row sm:items-center">
-                        <input
-                          type="checkbox"
-                          checked={isCompleted}
+                        <TaskCompletionTimer
+                          userId={userId!}
+                          taskId={task.taskId}
+                          planId={task.planId}
+                          topicId={task.topicId}
+                          status={task.status}
                           disabled={updatingTaskId === task.taskId}
-                          onChange={(e) => void handleToggleTask(task.taskId, e.target.checked)}
-                          className="w-5 h-5 text-primary rounded shrink-0"
+                          onStatusChange={(status) => handleTaskStatusChange(task.taskId, status)}
+                          onError={(message) => setError(message)}
                         />
 
                         <div className="min-w-0 flex-1">
